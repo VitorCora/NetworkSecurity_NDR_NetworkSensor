@@ -1,0 +1,101 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to deploy your NDR Instance
+
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Description: "VPC ID"
+  DataSubnet:
+    Type: AWS::EC2::Subnet::Id
+    Description: "Subnet ID"
+  ManagementSubnet:
+    Type: AWS::EC2::Subnet::Id
+    Description: "Subnet ID"
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "NDR Key Pair"
+  InstanceType:
+    Type: String
+    Description: "Instance Type"
+    Default: "m5.2xlarge"
+  ImageId:
+    Type: AWS::EC2::Image::Id
+    Description: "Image ID"
+    Default: "ami-0e0b5fcf9f332f414"
+  InstanceName:
+    Type: String
+    Description: "Instance Name"
+    Default: "NDR Appliance"
+  Token:
+    Type: String
+    Description: "Token"
+    NoEcho: true
+    
+Resources:
+
+  DataSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'My Security Group'
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: '0.0.0.0/0'
+      Tags:
+        - Key: Name
+          Value: MySecurityGroup
+
+  ManagementSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'My Security Group'
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: '0.0.0.0/0'
+      Tags:
+        - Key: Name
+          Value: MySecurityGroup
+
+  DataENI:
+    Type: 'AWS::EC2::NetworkInterface'
+    Properties:
+      SourceDestCheck: false
+      SubnetId: !Ref DataSubnet
+      Description: 'Trend Micro NDR Data ENI'
+      GroupSet:
+        - !Ref DataSecurityGroup
+      Tags:
+        - Key: Name
+          Value: Trend Micro Network Sensor Data ENI
+
+  ManagementENI:
+    Type: 'AWS::EC2::NetworkInterface'
+    Properties:
+      SubnetId: !Ref ManagementSubnet
+      Description: 'Trend Micro NDR Management ENI'
+      Tags:
+        - Key: Name
+          Value: Trend Micro Network Sensor Management ENI
+
+  NDRInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: !Ref ImageId
+      NetworkInterfaces:
+        - NetworkInterfaceId: !Ref DataENI
+          DeviceIndex: 0
+        - NetworkInterfaceId: !Ref ManagementENI
+          DeviceIndex: 1
+      Monitoring: true
+      UserData:
+        Fn::Base64: !Ref Token
+      Tags:
+        - Key: Name
+          Value: !Ref InstanceName
