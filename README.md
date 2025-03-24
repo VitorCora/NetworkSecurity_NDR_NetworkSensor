@@ -5,6 +5,7 @@ aws cloudformation create-stack --stack-name V1NetSec --template-body file://Tre
 
 
 ``
+
 aws cloudformation create-stack --stack-name V1NetSec \
 --template-body file://TrendNDR_Instance.yml \
 --parameters \
@@ -16,4 +17,5 @@ ParameterKey=KeyName,ParameterValue="$KEY_NAME" \
 ParameterKey=InstanceType,ParameterValue="$INSTANCE_TYPE" \
 ParameterKey=ImageId,ParameterValue="$IMAGE_ID" \
 ParameterKey=InstanceName,ParameterValue="$INSTANCE_NAME"
+
 ``
